@@ -61,6 +61,14 @@ class TemporalNet:
             new_walkers.append(np.random.choice(walks) if walks.size else walker)
         self.walkers = new_walkers
 
+    def get_walkers_hist(self, start, end, bins: int = 30):
+        bins = np.logspace(np.log10(start), np.log10(end), bins+1)
+        walkers_a = self.a_vec[self.walkers]
+        hist, bins = np.histogram(walkers_a, bins=bins)
+        mids = np.power(10, (np.log10(bins[1:]) + np.log10(bins[:-1]))/2)
+        return hist, mids
+
+
 
 def save_plot(out_path, a_vec, gamma, epsilon):
     fig, ax = plt.subplots(figsize=(10, 10))
@@ -71,12 +79,14 @@ def save_plot(out_path, a_vec, gamma, epsilon):
     ax.legend()
     fig.savefig(out_path, format='jpg')
 
+
 def main(args):
     # Prepare output
     save_dir = Path(args.output)
     save_dir.mkdir(parents=True, exist_ok=True)
-    figs_dir = save_dir / 'figs'
-    figs_dir.mkdir(parents=True, exist_ok=True)
+    if args.save_plot:
+        figs_dir = save_dir / 'figs'
+        figs_dir.mkdir(parents=True, exist_ok=True)
     with open(save_dir / 'output.csv', 'a') as f:
         f.write(f'#n={args.agents_num}\n'
                 f'#m={args.m_value}\n'
@@ -91,13 +101,18 @@ def main(args):
     sim_id = 0
     for n in args.agents_num:
         for gamma in args.gamma:
-            for _ in range(args.repetitions):
+            for rep in range(args.repetitions):
                 tnet = TemporalNet(n=n, m=args.m_value, walkers_num=int(args.walkers_fraction*n),
                                    random_a_func=random_generator, funcargs=(gamma, args.eps))
-                save_plot(figs_dir / f'n{n}_gamma{gamma}.jpg', tnet.a_vec, gamma, args.eps)
+                if rep == 0 and args.save_plot:
+                    save_plot(figs_dir / f'n{n}_gamma{gamma}.jpg', tnet.a_vec, gamma, args.eps)
                 for _ in tqdm(range(args.steps)):
                     tnet.step()
-
+                hist, a_mids = tnet.get_walkers_hist(args.eps, 1)
+                with open(save_dir / 'output.csv', 'a') as f:
+                    for c, a in zip(hist, a_mids):
+                        f.write(f"{sim_id};{n};{gamma};{a};{c}\n")
+                sim_id += 1
 
 if __name__ == "__main__":
     now = datetime.now().strftime("%d-%m-%Y-%H-%M-%S")
@@ -114,6 +129,8 @@ if __name__ == "__main__":
                                                                                    'is f(x)~x^{-gamma}; choose gamma')
     parser.add_argument('-e', '--eps', type=float, default=0.1, help='Activation values are between epsilon and 1')
     parser.add_argument('-o', '--output', type=Path, default=Path(f'outputs/{now}'), help='Path to save outputs')
+    parser.add_argument('--save-plot', action='store_true', help='If activated plots of example a values distribution '
+                                                                 'will be saved')
     args = parser.parse_args()
 
     sys.exit(main(args) or 0)
