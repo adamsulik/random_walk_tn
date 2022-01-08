@@ -117,8 +117,8 @@ def main(args):
 if __name__ == "__main__":
     now = datetime.now().strftime("%d-%m-%Y-%H-%M-%S")
     parser = argparse.ArgumentParser()
-    parser.add_argument('-r', '--repetitions', default=1, help='Repetitions of each simulation, possibly to calculate '
-                                                               'average results')
+    parser.add_argument('-r', '--repetitions', default=1, type=int,
+                        help='Repetitions of each simulation, possibly to calculate average results')
     parser.add_argument('-n', '--agents-num', type=int, nargs='*', default=[100])
     parser.add_argument('-m', '--m-value', type=int, default=2)
     parser.add_argument('-s', '--steps', type=int, default=30)
