@@ -74,8 +74,16 @@ def save_plot(out_path, a_vec, gamma, epsilon):
     fig, ax = plt.subplots(figsize=(10, 10))
     x = np.linspace(epsilon, 1, 5000)
     y = base_func(x, gamma, epsilon)
-    ax.hist(a_vec, bins=30, density=True)
-    ax.plot(x, y, label='distribution function of a values')
+    bins = 30
+    bins = np.logspace(np.log10(epsilon), np.log10(1), bins + 1)
+    hist, bins = np.histogram(a_vec, bins=bins, density=True)
+    mids = np.power(10, (np.log10(bins[1:]) + np.log10(bins[:-1])) / 2)
+    ax.plot(x, y, label=r'distribution function of $\mathcal{a}$ values')
+    ax.scatter(mids, hist, label='histogram of example $\mathcal{a}$ values')
+    ax.set_xscale('log')
+    ax.set_yscale('log')
+    ax.set_xlabel('activation')
+    ax.set_ylabel('density')
     ax.legend()
     fig.savefig(out_path, format='jpg')
 
