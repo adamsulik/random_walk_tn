@@ -69,7 +69,6 @@ class TemporalNet:
         return hist, mids
 
 
-
 def save_plot(out_path, a_vec, gamma, epsilon):
     fig, ax = plt.subplots(figsize=(10, 10))
     x = np.linspace(epsilon, 1, 5000)
